@@ -22,11 +22,13 @@ public class Agent {
     private static HashSet<Character> obstacles;
     private static HashSet<Character> normal;
     private static HashSet<Character> goals;
-    private static HashSet<String> seen;
+    private static HashSet<Point> seen;
+    private static HashSet<Point> explored;
     private static Hashtable<Character, Integer> assets;
 
     public char get_action( char view[][] ) {
-        System.out.println(x + " " + y);
+    	explored.add(new Point(x,y));
+    	System.out.println(x + " " + y);
         
         // add new view to map if not seen before
         System.out.println(dir);
@@ -36,8 +38,9 @@ public class Agent {
         
         for (int j = -2; j < 3; j++) {
             for (int i = -2; i < 3; i++) {
-            	if (seen.contains(x+i + "," + y+j)) continue;
-            	seen.add(x+i + "," + y+j);
+            	Point p = new Point(x+i, y+i);
+            	if (seen.contains(p)) continue;
+            	seen.add(p);
                 map[y+j][x+i] = view[j+2][i+2];
             }
         }
@@ -192,11 +195,12 @@ public class Agent {
         y = BUF_SIZE/2;
         dir = Dir.SOUTH;
         
-        seen = new HashSet<String>();
+        seen = new HashSet<Point>();
         obstacles = new HashSet<Character>();
         normal = new HashSet<Character>();
         goals = new HashSet<Character>();
         assets = new Hashtable<Character, Integer>();
+        explored = new HashSet<Point>();
         
         obstacles.add('*');
         obstacles.add('~'); 
@@ -374,6 +378,19 @@ public class Agent {
         }
         // end printing
         return goalPoints;
+    }
+    
+    public ArrayList<Point> getExplorationPoints() {
+    	ArrayList<Point> explorationPoints = new ArrayList<Point>();
+    	for (int i = 0; i < BUF_SIZE; i++) {
+    		for (int j = 0; j < BUF_SIZE; j++) {
+    			Point p = new Point(j,i);
+    			if (!explored.contains(p)) {
+    				explorationPoints.add(p);
+    			}
+    		}
+    	}
+    	return explorationPoints;
     }
     
     public String steps(ArrayList<Point> path) {
