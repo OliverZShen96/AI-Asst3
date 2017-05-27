@@ -27,13 +27,13 @@ public class Agent {
     private static Queue<Character> moveBuffer;
 
     public char get_action( char view[][] ) {
-        char action = ';';
+        char action = '\0';
         if (!moveBuffer.isEmpty()) {
             action = moveBuffer.poll();
         }
 
-    	explored.add(new Point(x,y));
-    	System.out.println(x + " " + y);
+        explored.add(new Point(x,y));
+        System.out.println(x + " " + y);
         
         // add new view to map if not seen before
         System.out.println(dir);
@@ -43,7 +43,7 @@ public class Agent {
         
         for (int j = -2; j < 3; j++) {
             for (int i = -2; i < 3; i++) {
-            	Point p = new Point(x+i, y+i);
+                Point p = new Point(x+i, y+i);
                 map[y+j][x+i] = view[j+2][i+2];
             }
         }
@@ -62,68 +62,71 @@ public class Agent {
         }
 
         System.out.println("assets: " + assets);
-
-        ArrayList<Point> p = null;
-        String steps;
-        char[] charSteps;
-        Queue<Character> q = null;
-        if (action == ';') {
-            ArrayList<Point> g = findGoals();
-            if (!g.isEmpty()) p = pathToGoal(g.get(0));
-            if (p != null) {
-                System.out.println("p.x: " + p.get(0).x);
-                System.out.println("p.y: " + p.get(0).y);
-                steps = steps(p);
-                charSteps = steps.toCharArray();
-
-                for (int i = 1; i != steps.length(); i++) {
-                    moveBuffer.add(charSteps[i]);
-                }
-                action = charSteps[0];
-            } else {
-                // read character from keyboard
-                try {
-                    System.out.print("Enter Action(s): ");
-                    action  = (char) System.in.read();
-                } catch (IOException e) {
-                    System.out.println("IO Error: " + e);
-                }
-                action = Character.toUpperCase(action);
+        
+        // try going to goal tile
+        if (action == '\0') {
+            
+            // Find all possible goals
+            ArrayList<Point> goals = findGoals();
+            
+            // For each goalPoint, try finding a path to it
+            // If no path exists, try the next one until one is found
+            // If path exists, add the steps to the move buffer and take the first step
+            for (Point goalPoint : goals) {
+                ArrayList<Point> p = pathToGoal(goalPoint);
+                if (p == null) break;
+                char[] steps = steps(p).toCharArray();
+                for (int i = 1; i < steps.length; i++) moveBuffer.add(steps[i]);
+                action = steps[0];
+                break;
             }
         }
-
+        // if no path to a goal tile is found, go to unexplored tile
+        if (action == '\0') {
+            
+        }
+        
+        // if fully explored, read from input
+        if (action == '\0') {
+            try {
+                System.out.print("Enter Action(s): ");
+                action  = (char) System.in.read();
+            } catch (IOException e) {
+                System.out.println("IO Error: " + e);
+            }
+            action = Character.toUpperCase(action);
+        }
+        
+        
         switch( action ) { // if character is a valid action, return it
-        case 'F': 
-            switch(dir) {
-            case NORTH:
-                y--;
-                break;  
-            case SOUTH:
-                y++;
+            case 'F': 
+                
+                // move character
+                if (dir == Dir.NORTH) y--;
+                else if (dir == Dir.SOUTH) y++;
+                else if (dir == Dir.WEST) x--;
+                else /*(dir == Dir.EAST)*/ x++;
+                
+                // pick up any objects
+                updateAssets(new Point(x,y));
+                updateObstacles();
+                
                 break;
-            case WEST:
-                x--;
+            case 'L':
+                dir = Dir.values()[(dir.ordinal()+3)%4];
                 break;
-            case EAST:
-                x++;
+            case 'R': 
+                dir = Dir.values()[(dir.ordinal()+5)%4];
                 break;
-            }
-            break;
-        case 'L':
-            dir = Dir.values()[(dir.ordinal()+3)%4];
-            break;
-        case 'R': 
-            dir = Dir.values()[(dir.ordinal()+5)%4];
-            break;
-        case 'C': 
-            break;
-        case 'U': 
-            break;
-        case 'B':
-            break;
+            case 'C': 
+                break;
+            case 'U': 
+                break;
+            case 'B':
+                break;
         }
-        updateAssets(new Point(x,y));
-        updateObstacles();
+        
+        
         return action;
     }
 
@@ -379,16 +382,16 @@ public class Agent {
     }
     
     public ArrayList<Point> getExplorationPoints() {
-    	ArrayList<Point> explorationPoints = new ArrayList<Point>();
-    	for (int i = 0; i < BUF_SIZE; i++) {
-    		for (int j = 0; j < BUF_SIZE; j++) {
-    			Point p = new Point(j,i);
-    			if (!explored.contains(p)) {
-    				explorationPoints.add(p);
-    			}
-    		}
-    	}
-    	return explorationPoints;
+        ArrayList<Point> explorationPoints = new ArrayList<Point>();
+        for (int i = 0; i < BUF_SIZE; i++) {
+            for (int j = 0; j < BUF_SIZE; j++) {
+                Point p = new Point(j,i);
+                if (!explored.contains(p)) {
+                    explorationPoints.add(p);
+                }
+            }
+        }
+        return explorationPoints;
     }
     
     public String steps(ArrayList<Point> path) {
@@ -409,10 +412,10 @@ public class Agent {
             else newDir = Dir.SOUTH;
             
             while (newDir != currDir) {
-            	sb.append("L");
-            	// System.out.println(sb.toString());
-            	// System.out.println(currDir);
-            	currDir = Dir.values()[(currDir.ordinal()+3)%4];
+                sb.append("L");
+                // System.out.println(sb.toString());
+                // System.out.println(currDir);
+                currDir = Dir.values()[(currDir.ordinal()+3)%4];
             }
 
             char destTile = map[curr.y][curr.x];
