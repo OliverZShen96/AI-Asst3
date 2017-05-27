@@ -123,6 +123,7 @@ public class Agent {
             break;
         }
         updateAssets(new Point(x,y));
+        updateObstacles();
         return action;
     }
 
@@ -274,6 +275,15 @@ public class Agent {
         System.out.println("character: " + c);
         if (c.equals('a') || c.equals('d') || c.equals('k')) {
             assets.put(c, assets.get(c)+1);
+        }
+    }
+
+    public void updateObstacles() {
+        if (assets.get('k') != 0) {
+            obstacles.remove('-');
+        }
+        if (assets.get('a') != 0) {
+            obstacles.remove('T');
         }
     }
 
