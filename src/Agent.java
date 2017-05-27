@@ -25,6 +25,8 @@ public class Agent {
     private static HashSet<Point> explored;
     private static Hashtable<Character, Integer> assets;
     private static Queue<Character> moveBuffer;
+    private static Point startingPoint;
+    private static boolean treasureFound;
 
     public char get_action( char view[][] ) {
         char action = '\0';
@@ -67,7 +69,13 @@ public class Agent {
         if (action == '\0') {
             
             // Find all possible goals
-            ArrayList<Point> goals = findGoals();
+            ArrayList<Point> goals = null;
+            if (treasureFound == true) {
+                goals = new ArrayList<Point>();
+                goals.add(startingPoint);
+            } else {
+                goals = findGoals();
+            }
             
             // For each goalPoint, try finding a path to it
             // If no path exists, try the next one until one is found
@@ -118,7 +126,8 @@ public class Agent {
             case 'R': 
                 dir = Dir.values()[(dir.ordinal()+5)%4];
                 break;
-            case 'C': 
+            case 'C':
+                assets.put('r', assets.get('r')+1);
                 break;
             case 'U': 
                 break;
@@ -185,6 +194,8 @@ public class Agent {
         x = BUF_SIZE/2;
         y = BUF_SIZE/2;
         dir = Dir.SOUTH;
+        startingPoint = new Point(x,y);
+        treasureFound = false;
         
         obstacles = new HashSet<Character>();
         normal = new HashSet<Character>();
@@ -207,6 +218,7 @@ public class Agent {
         assets.put('k', 0);
         assets.put('d', 0);
         assets.put('$', 0);
+        assets.put('r', 0); // raft
 
         try { // scan 5-by-5 window around current location
             while( true ) {
@@ -275,9 +287,10 @@ public class Agent {
 
     public void updateAssets(Point p) {
         Character c = map[p.y][p.x];
-        System.out.println("character: " + c);
         if (c.equals('a') || c.equals('d') || c.equals('k')) {
             assets.put(c, assets.get(c)+1);
+        } else if (c.equals('$')) {
+            treasureFound = true;
         }
     }
 
