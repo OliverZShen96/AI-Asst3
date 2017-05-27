@@ -22,11 +22,16 @@ public class Agent {
     private static HashSet<Character> obstacles;
     private static HashSet<Character> normal;
     private static HashSet<Character> goals;
-    private static HashSet<Point> seen;
     private static HashSet<Point> explored;
     private static Hashtable<Character, Integer> assets;
+    private static Queue<Character> moveBuffer;
 
     public char get_action( char view[][] ) {
+        char action = ';';
+        if (!moveBuffer.isEmpty()) {
+            action = moveBuffer.poll();
+        }
+
     	explored.add(new Point(x,y));
     	System.out.println(x + " " + y);
         
@@ -39,8 +44,6 @@ public class Agent {
         for (int j = -2; j < 3; j++) {
             for (int i = -2; i < 3; i++) {
             	Point p = new Point(x+i, y+i);
-            	if (seen.contains(p)) continue;
-            	seen.add(p);
                 map[y+j][x+i] = view[j+2][i+2];
             }
         }
@@ -58,85 +61,69 @@ public class Agent {
             System.out.println();
         }
 
+        System.out.println("assets: " + assets);
+
         ArrayList<Point> p = null;
         String steps;
-        char[] idk;
+        char[] charSteps;
         Queue<Character> q = null;
-
-        ArrayList<Point> g = findGoals();
-        if (!g.isEmpty()) {
-            p = pathToGoal(g.get(0));
+        if (action == ';') {
+            ArrayList<Point> g = findGoals();
+            if (!g.isEmpty()) p = pathToGoal(g.get(0));
             if (p != null) {
                 System.out.println("p.x: " + p.get(0).x);
                 System.out.println("p.y: " + p.get(0).y);
-                updateAssets(p.get(1));
                 steps = steps(p);
-                idk = steps.toCharArray();
+                charSteps = steps.toCharArray();
 
-                q = new LinkedList<Character>();
-                for (int i = 0; i != steps.length(); i++) {
-                    Character c = new Character(idk[i]);
-                    q.add(c);
+                for (int i = 1; i != steps.length(); i++) {
+                    moveBuffer.add(charSteps[i]);
                 }
-            }
-        }
-
-        System.out.println("assets: " + assets);
-
-        int ch=0;
-
-        System.out.print("Enter Action(s): ");
-
-        try {
-            while ( ch != -1 ) {
+                action = charSteps[0];
+            } else {
                 // read character from keyboard
-                if (p != null) {
-                    ch = q.poll();
-                } else {
-                    ch  = System.in.read();
-                    ch = Character.toUpperCase(ch);
+                try {
+                    System.out.print("Enter Action(s): ");
+                    action  = (char) System.in.read();
+                } catch (IOException e) {
+                    System.out.println("IO Error: " + e);
                 }
-                switch( ch ) { // if character is a valid action, return it
-                case 'F': 
-                    switch(dir) {
-                    case NORTH:
-                        y--;
-                        break;  
-                    case SOUTH:
-                        y++;
-                        break;
-                    case WEST:
-                        x--;
-                        break;
-                    case EAST:
-                        x++;
-                        break;
-                    }
-                    break;
-                case 'L':
-                    dir = Dir.values()[(dir.ordinal()+3)%4];
-                    break;
-                case 'R': 
-                    dir = Dir.values()[(dir.ordinal()+5)%4];
-                    break;
-                case 'C': 
-                    break;
-                case 'U': 
-                    break;
-                case 'B':
-                    break;
-                case '?':
-
-                    
-                }
-                return (char)ch;
+                action = Character.toUpperCase(action);
             }
         }
-        catch (IOException e) {
-            System.out.println ("IO error:" + e );
-        }
 
-        return 0;
+        switch( action ) { // if character is a valid action, return it
+        case 'F': 
+            switch(dir) {
+            case NORTH:
+                y--;
+                break;  
+            case SOUTH:
+                y++;
+                break;
+            case WEST:
+                x--;
+                break;
+            case EAST:
+                x++;
+                break;
+            }
+            break;
+        case 'L':
+            dir = Dir.values()[(dir.ordinal()+3)%4];
+            break;
+        case 'R': 
+            dir = Dir.values()[(dir.ordinal()+5)%4];
+            break;
+        case 'C': 
+            break;
+        case 'U': 
+            break;
+        case 'B':
+            break;
+        }
+        updateAssets(new Point(x,y));
+        return action;
     }
 
     void print_view( char view[][] )
@@ -195,12 +182,12 @@ public class Agent {
         y = BUF_SIZE/2;
         dir = Dir.SOUTH;
         
-        seen = new HashSet<Point>();
         obstacles = new HashSet<Character>();
         normal = new HashSet<Character>();
         goals = new HashSet<Character>();
         assets = new Hashtable<Character, Integer>();
         explored = new HashSet<Point>();
+        moveBuffer = new LinkedList<Character>();
         
         obstacles.add('*');
         obstacles.add('~'); 
@@ -284,6 +271,7 @@ public class Agent {
 
     public void updateAssets(Point p) {
         Character c = map[p.y][p.x];
+        System.out.println("character: " + c);
         if (c.equals('a') || c.equals('d') || c.equals('k')) {
             assets.put(c, assets.get(c)+1);
         }
@@ -412,8 +400,8 @@ public class Agent {
             
             while (newDir != currDir) {
             	sb.append("L");
-            	System.out.println(sb.toString());
-            	System.out.println(currDir);
+            	// System.out.println(sb.toString());
+            	// System.out.println(currDir);
             	currDir = Dir.values()[(currDir.ordinal()+3)%4];
             }
 
