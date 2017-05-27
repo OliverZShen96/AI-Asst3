@@ -83,7 +83,13 @@ public class Agent {
         }
         // if no path to a goal tile is found, go to unexplored tile
         if (action == '\0') {
-            
+            Point dest = getExplorationPoint();
+            if (dest != null) {
+            	ArrayList<Point> path = pathToGoal(dest);
+            	char[] steps = steps(path).toCharArray();
+            	for (int i = 1; i < steps.length; i++) moveBuffer.add(steps[i]);
+            	action = steps[0];
+            }
         }
         
         // if fully explored, read from input
@@ -363,35 +369,60 @@ public class Agent {
 
     public ArrayList<Point> findGoals() {
         ArrayList<Point> goalPoints = new ArrayList<Point>();
-        for (int i = 0; i < BUF_SIZE; i++) {
-            for (int j = 0; j < BUF_SIZE; j++) {
-                if (goals.contains(map[j][i])) goalPoints.add(new Point(i,j));
-            }
+        
+        Set<Point> set = new HashSet<Point>();
+        Queue<Point> q = new LinkedList<Point>();
+        
+        Point root = new Point(x,y);
+        set.add(root);
+        q.add(root);
+        
+        while (!q.isEmpty()) {
+        	Point curr = q.remove();
+        	char tileType = map[curr.y][curr.x];
+        	if (goals.contains(tileType)) goalPoints.add(curr);
+        	Point n = new Point(curr.x, curr.y-1);
+        	Point s = new Point(curr.x, curr.y+1);
+        	Point e = new Point(curr.x+1, curr.y);
+        	Point w = new Point(curr.x-1, curr.y);
+        	Point[] adjacentPoints = {n,s,e,w};
+        	for (Point p : adjacentPoints) {
+        		if (!set.contains(p) && !obstacles.contains(tileType)) {
+        			set.add(p);
+        			q.add(p);
+        		}
+        	}
         }
-        // printing
-        if (!goalPoints.isEmpty()) {
-            System.out.println("Goal point(s): ");
-        }
-        for (int i = 0; i != goalPoints.size(); i++) {
-            Point p = goalPoints.get(i);
-            System.out.println("[" + p.x + "," + p.y + "] ");
 
-        }
-        // end printing
         return goalPoints;
     }
     
-    public ArrayList<Point> getExplorationPoints() {
-        ArrayList<Point> explorationPoints = new ArrayList<Point>();
-        for (int i = 0; i < BUF_SIZE; i++) {
-            for (int j = 0; j < BUF_SIZE; j++) {
-                Point p = new Point(j,i);
-                if (!explored.contains(p)) {
-                    explorationPoints.add(p);
-                }
-            }
+    public Point getExplorationPoint() {
+        Set<Point> set = new HashSet<Point>();
+        Queue<Point> q = new LinkedList<Point>();
+        
+        Point root = new Point(x,y);
+        set.add(root);
+        q.add(root);
+        
+        while (!q.isEmpty()) {
+        	Point curr = q.remove();
+        	char tileType = map[curr.y][curr.x];
+        	if (normal.contains(tileType) && !explored.contains(curr)) return curr;
+        	Point n = new Point(curr.x, curr.y-1);
+        	Point s = new Point(curr.x, curr.y+1);
+        	Point e = new Point(curr.x+1, curr.y);
+        	Point w = new Point(curr.x-1, curr.y);
+        	Point[] adjacentPoints = {n,s,e,w};
+        	for (Point p : adjacentPoints) {
+        		if (!set.contains(p) && !obstacles.contains(tileType)) {
+        			set.add(p);
+        			q.add(p);
+        		}
+        	}
         }
-        return explorationPoints;
+
+        return null;
     }
     
     public String steps(ArrayList<Point> path) {
