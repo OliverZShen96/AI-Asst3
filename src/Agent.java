@@ -14,7 +14,7 @@ public class Agent {
     
     private enum Dir { NORTH,EAST,SOUTH,WEST };
 
-    private static final int BUF_SIZE = 25;
+    private static final int BUF_SIZE = 50;
     public static char[][] map;
     private static int x;
     private static int y;
@@ -56,8 +56,8 @@ public class Agent {
             for (int j = 0; j < BUF_SIZE; j++) {
                 char c = map[i][j];
                 String s = "";
-                if (c == '?') s = String.format("%6s", j +","+ i + " ");
-                else s = String.format("%6s", "[ "+c+"] ");
+                if (c == '?') s = String.format("%3s", "? ");// String.format("%6s", j +","+ i + " ");
+                else s = String.format("%3s", "[" + c + "]");
                 System.out.print(s);
             }
             System.out.println();
@@ -94,9 +94,11 @@ public class Agent {
             Point dest = getExplorationPoint();
             if (dest != null) {
             	ArrayList<Point> path = pathToGoal(dest);
-            	char[] steps = steps(path).toCharArray();
-            	for (int i = 1; i < steps.length; i++) moveBuffer.add(steps[i]);
-            	action = steps[0];
+                if (path != null) {
+                    char[] steps = steps(path).toCharArray();
+                    for (int i = 1; i < steps.length; i++) moveBuffer.add(steps[i]);
+                    action = steps[0];
+                }
             }
         }
         
@@ -442,6 +444,7 @@ public class Agent {
         StringBuilder sb = new StringBuilder();
         Dir currDir = dir;
 
+        if (path == null) return null;
         while (path.size() != 1) {
             Point prev = path.get(0);
             Point curr = path.get(1);
